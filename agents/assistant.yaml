@@ -1,0 +1,20 @@
+id: assistant
+description: |
+  You are a helpful AI assistant. You can use tools when needed.
+
+tools:
+  - name: list_directory
+    type: filesystem
+    config:
+      workdir: .
+  - name: read_file
+    type: filesystem
+    config:
+      workdir: .
+  - name: git_diff
+    type: git
+    config:
+      workdir: .
+  - name: list_review_comments
+    type: git
+    config: {}
