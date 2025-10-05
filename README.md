@@ -207,6 +207,31 @@ We're actively working on expanding our Git toolset. Here are some of the featur
 
 Stay tuned for updates as we continue to enhance our Git integration!
 
+## Release Process
+
+Releases are managed via Git tags following [Semantic Versioning](https://semver.org/).
+
+1. Make sure all changes are committed and tested.
+2. Create a new tag for the version, for example:
+
+   ```bash
+   git tag v1.2.3
+   git push origin v1.2.3
+   ```
+3. GitHub Actions will automatically:
+
+   * Build the Docker image
+   * Push it to the registry with tags:
+
+      * `1.2.3`
+      * `latest`
+4. You can pull the image with:
+
+   ```bash
+   docker pull ghcr.io/zver-in/commitai:1.2.3
+   docker pull ghcr.io/zver-in/commitai:latest
+   ```
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
