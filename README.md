@@ -23,8 +23,8 @@ CommitAI is an open-source framework for creating and managing AI agents through
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/commitai-v2.git
-   cd commitai-v2
+   git clone https://github.com/zver-in/commitai.git
+   cd commitai
    ```
 
 2. Install dependencies:
@@ -68,7 +68,7 @@ You can also run this project using Docker, which is especially useful for consi
 ### Building the Docker image
 
 ```bash
-docker build -t commitai-v2 .
+docker build -t commitai .
 ```
 
 ### Running the container
@@ -78,7 +78,7 @@ Basic usage:
 docker run -it --rm \
   -e OPENAI_API_KEY=your_api_key_here \
   -v $(pwd)/agents:/app/agents \
-  commitai-v2 --agent "/app/agents/assistant.yaml" "Your request here"
+  commitai --agent "/app/agents/assistant.yaml" "Your request here"
 ```
 
 ### Development with Docker
@@ -89,7 +89,7 @@ docker run -it --rm \
   -e OPENAI_API_KEY=your_api_key_here \
   -v $(pwd):/app \
   -v /app/__pycache__ \
-  commitai-v2 --agent "/app/agents/assistant.yaml" "Your request here"
+  commitai --agent "/app/agents/assistant.yaml" "Your request here"
 ```
 
 ### Environment Variables
@@ -206,6 +206,31 @@ We're actively working on expanding our Git toolset. Here are some of the featur
 - Stash operations
 
 Stay tuned for updates as we continue to enhance our Git integration!
+
+## Release Process
+
+Releases are managed via Git tags following [Semantic Versioning](https://semver.org/).
+
+1. Make sure all changes are committed and tested.
+2. Create a new tag for the version, for example:
+
+   ```bash
+   git tag v1.2.3
+   git push origin v1.2.3
+   ```
+3. GitHub Actions will automatically:
+
+   * Build the Docker image
+   * Push it to the registry with tags:
+
+      * `1.2.3`
+      * `latest`
+4. You can pull the image with:
+
+   ```bash
+   docker pull ghcr.io/zver-in/commitai:1.2.3
+   docker pull ghcr.io/zver-in/commitai:latest
+   ```
 
 ## Contributing
 
