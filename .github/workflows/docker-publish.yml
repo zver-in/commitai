@@ -40,8 +40,8 @@ jobs:
         with:
           push: true
           tags: |
-            zver-in/commitai:${{ steps.extract_version.outputs.version }}
-            zver-in/commitai:latest
+            ghcr.io/zver-in/commitai:${{ steps.extract_version.outputs.version }}
+            ghcr.io/zver-in/commitai:latest
           file: ./Dockerfile
           context: .
 
