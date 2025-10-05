@@ -1,0 +1,59 @@
+name: Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  code-review:
+    name: Run Code Review Agent
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required to get the full git history
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+          
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        id: pip-cache-action
+        with:
+          path: |
+            ${{ steps.pip-cache.outputs.dir }}
+            ~/.cache/pip
+          # Use a more specific cache key with Python version and hash of requirements
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-python-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}-
+            ${{ runner.os }}-python-${{ matrix.python-version }}-pip-
+            ${{ runner.os }}-pip-
+            
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --prefer-binary -r requirements.txt
+          
+      - name: Run Code Review Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_PR_NUMBER: ${{ github.event.number }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          python -m src.run_agent --verbose --agent "$GITHUB_WORKSPACE/agents/code_reviewer.yaml" "Proceed current PR number ${GITHUB_PR_NUMBER}"
