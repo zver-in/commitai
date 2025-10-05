@@ -136,16 +136,26 @@ def build_read_file(config: Dict[str, Any]):
         if _is_denied(rel, deny):
             return f"Access denied by deny policy for: {path}"
 
-        try:
-            size = os.path.getsize(target)
-            if size > limit and (start_line is None and end_line is None):
-                return f"File is too large ({size} bytes), limit {limit} bytes: {path}"
-        except PermissionError as e:
-            return f"Permission denied when checking file size for {path}: {e}"
-        except FileNotFoundError:
-            return f"File not found while checking size: {path}"
-        except OSError:
-            size = -1
+        # Only check file size if we're reading the whole file (no line range specified)
+        if start_line is None and end_line is None:
+            try:
+                size = os.path.getsize(target)
+                if size > limit:
+                    return f"File is too large ({size} bytes), limit {limit} bytes: {path}"
+            except PermissionError as e:
+                return f"Permission denied when checking file size for {path}: {e}"
+            except FileNotFoundError:
+                return f"File not found while checking size: {path}"
+            except OSError:
+                size = -1
+        
+        # Validate line numbers if provided
+        if start_line is not None and start_line < 1:
+            return f"Invalid start_line: must be 1 or greater, got {start_line}"
+        if end_line is not None and end_line < 1:
+            return f"Invalid end_line: must be 1 or greater, got {end_line}"
+        if start_line is not None and end_line is not None and start_line > end_line:
+            return f"Invalid line range: start_line ({start_line}) must be less than or equal to end_line ({end_line})"
 
         try:
             with open(target, "r", encoding="utf-8", errors="replace") as f:
@@ -201,7 +211,7 @@ def build_search_in_files(config: Dict[str, Any]):
         - query: text to search
         - path: directory path relative to workdir (default '.')
         - file_glob: optional file pattern (e.g. '*.py')
-        - max_matches: maximum number of matches to return
+        - max_matches: maximum number of matches to return (first N matches found will be returned)
         """
         target_dir = _abspath(os.path.join(workdir, path))
         if not _ensure_within(workdir, target_dir):
