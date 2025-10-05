@@ -180,9 +180,10 @@ Note: The `--agent` must point to a YAML file that exists at the specified path.
 
 ### Filesystem Tools
 - `list_directory` - List contents of a directory
-- `read_file` - Read file contents
+- `read_file` - Read file contents with support for line ranges and size limits
 - `write_file` - Write to a file
 - `view_file` - View file contents with syntax highlighting
+- `search_in_files` - Search for text within files under a given directory
 
 ### Git Tools
 

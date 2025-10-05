@@ -1,5 +1,5 @@
 from typing import Any, Dict, Callable
-from .filesystem import build_list_directory, build_read_file
+from .filesystem import build_list_directory, build_read_file, build_search_in_files
 from .git import (
     build_git_changed_files,
     build_git_diff,
@@ -29,6 +29,7 @@ class ToolFactory:
             "filesystem": {
                 "list_directory": build_list_directory,
                 "read_file": build_read_file,
+                "search_in_files": build_search_in_files,
             },
             "git": {
                 "git_changed_files": build_git_changed_files,

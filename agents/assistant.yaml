@@ -11,6 +11,11 @@ tools:
     type: filesystem
     config:
       workdir: .
+      max_bytes: 200000
+  - name: search_in_files
+    type: filesystem
+    config:
+      workdir: .
   - name: git_diff
     type: git
     config:

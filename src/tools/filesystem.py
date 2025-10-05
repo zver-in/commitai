@@ -106,12 +106,19 @@ def build_read_file(config: Dict[str, Any]):
     default_max = int(config.get("max_bytes", 200_000))
 
     @tool("read_file", return_direct=False)
-    def read_file(path: str, max_bytes: Optional[int] = None) -> str:
-        """Read a file within the workdir with size limit and deny-pattern checks.
+    def read_file(
+        path: str,
+        max_bytes: Optional[int] = None,
+        start_line: Optional[int] = None,
+        end_line: Optional[int] = None,
+    ) -> str:
+        """Read a file within the workdir with size limit, deny-pattern checks, and optional line ranges.
 
         Parameters:
         - path: relative path to a file inside workdir
         - max_bytes: override read size limit (defaults to config)
+        - start_line: first line number to read (1-based, optional)
+        - end_line: last line number to read (inclusive, optional)
 
         Security policies:
         - leaving the workdir is forbidden
@@ -128,21 +135,44 @@ def build_read_file(config: Dict[str, Any]):
         rel = os.path.relpath(target, workdir)
         if _is_denied(rel, deny):
             return f"Access denied by deny policy for: {path}"
-        try:
-            size = os.path.getsize(target)
-            if size > limit:
-                return f"File is too large ({size} bytes), limit {limit} bytes: {path}"
-        except PermissionError as e:
-            return f"Permission denied when checking file size for {path}: {e}"
-        except FileNotFoundError:
-            return f"File not found while checking size: {path}"
-        except OSError as e:
-            # If stat fails for other OS reasons, continue to attempt reading with limit
-            size = -1
+
+        # Only check file size if we're reading the whole file (no line range specified)
+        if start_line is None and end_line is None:
+            try:
+                size = os.path.getsize(target)
+                if size > limit:
+                    return f"File is too large ({size} bytes), limit {limit} bytes: {path}"
+            except PermissionError as e:
+                return f"Permission denied when checking file size for {path}: {e}"
+            except FileNotFoundError:
+                return f"File not found while checking size: {path}"
+            except OSError:
+                size = -1
+        
+        # Validate line numbers if provided
+        if start_line is not None and start_line < 1:
+            return f"Invalid start_line: must be 1 or greater, got {start_line}"
+        if end_line is not None and end_line < 1:
+            return f"Invalid end_line: must be 1 or greater, got {end_line}"
+        if start_line is not None and end_line is not None and start_line > end_line:
+            return f"Invalid line range: start_line ({start_line}) must be less than or equal to end_line ({end_line})"
+
         try:
             with open(target, "r", encoding="utf-8", errors="replace") as f:
-                content = f.read(limit)
-            return content
+                if start_line is not None or end_line is not None:
+                    # Line-by-line reading
+                    content_lines = []
+                    for i, line in enumerate(f, start=1):
+                        if start_line is not None and i < start_line:
+                            continue
+                        if end_line is not None and i > end_line:
+                            break
+                        content_lines.append(line.rstrip("\n"))
+                    return "\n".join(content_lines)
+                else:
+                    # Old behavior: byte limit
+                    return f.read(limit)
+
         except UnicodeDecodeError:
             return f"Unable to decode file as UTF-8: {path}"
         except FileNotFoundError:
@@ -155,3 +185,63 @@ def build_read_file(config: Dict[str, Any]):
             return f"OS error while reading file {path}: {e}"
 
     return read_file
+
+def build_search_in_files(config: Dict[str, Any]):
+    """Create a parameterized search_in_files tool bound to config.
+
+    Config supported keys:
+    - workdir: str (required)
+    - deny: list[str] (optional)
+    - max_bytes: int (optional, default 200_000) — maximum bytes to read from a single file
+    """
+    workdir = _abspath(config.get("workdir", "."))
+    deny: List[str] = list(config.get("deny", []) or [])
+    default_max = int(config.get("max_bytes", 200_000))
+
+    @tool("search_in_files", return_direct=False)
+    def search_in_files(
+        query: str,
+        path: str = ".",
+        file_glob: Optional[str] = None,
+        max_matches: int = 50,
+    ) -> str:
+        """Search for text within files under the given path inside the workdir.
+
+        Parameters:
+        - query: text to search
+        - path: directory path relative to workdir (default '.')
+        - file_glob: optional file pattern (e.g. '*.py')
+        - max_matches: maximum number of matches to return (first N matches found will be returned)
+        """
+        target_dir = _abspath(os.path.join(workdir, path))
+        if not _ensure_within(workdir, target_dir):
+            return f"Access denied: path is outside the working directory ({path})"
+        if not os.path.exists(target_dir):
+            return f"Directory not found: {path}"
+        if not os.path.isdir(target_dir):
+            return f"Not a directory: {path}"
+
+        matches = []
+        for root, _, files in os.walk(target_dir):
+            for filename in files:
+                rel = os.path.relpath(os.path.join(root, filename), workdir)
+                if _is_denied(rel, deny):
+                    continue
+                if file_glob and not fnmatch.fnmatch(filename, file_glob):
+                    continue
+                file_path = os.path.join(root, filename)
+                try:
+                    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        for lineno, line in enumerate(f, start=1):
+                            if query in line:
+                                matches.append(f"{rel}:{lineno}: {line.strip()}")
+                                if len(matches) >= max_matches:
+                                    return "\n".join(matches)
+                except Exception:
+                    continue
+
+        if not matches:
+            return f"No matches for '{query}' in {path}"
+        return "\n".join(matches)
+
+    return search_in_files
