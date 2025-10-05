@@ -5,7 +5,7 @@ Thank you for your interest in contributing to CommitAI! We're excited to have y
 ## Ways to Contribute
 
 1. **Report Bugs**
-   - Check if the bug has already been reported in the [issues](https://github.com/yourusername/commitai-v2/issues)
+   - Check if the bug has already been reported in the [issues](https://github.com/zver-in/commitai/issues)
    - If not, create a new issue with a clear title and description
    - Include steps to reproduce the bug and any relevant error messages
 

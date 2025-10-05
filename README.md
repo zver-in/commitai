@@ -23,8 +23,8 @@ CommitAI is an open-source framework for creating and managing AI agents through
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/commitai-v2.git
-   cd commitai-v2
+   git clone https://github.com/zver-in/commitai.git
+   cd commitai
    ```
 
 2. Install dependencies:
@@ -68,7 +68,7 @@ You can also run this project using Docker, which is especially useful for consi
 ### Building the Docker image
 
 ```bash
-docker build -t commitai-v2 .
+docker build -t commitai .
 ```
 
 ### Running the container
@@ -78,7 +78,7 @@ Basic usage:
 docker run -it --rm \
   -e OPENAI_API_KEY=your_api_key_here \
   -v $(pwd)/agents:/app/agents \
-  commitai-v2 --agent "/app/agents/assistant.yaml" "Your request here"
+  commitai --agent "/app/agents/assistant.yaml" "Your request here"
 ```
 
 ### Development with Docker
@@ -89,7 +89,7 @@ docker run -it --rm \
   -e OPENAI_API_KEY=your_api_key_here \
   -v $(pwd):/app \
   -v /app/__pycache__ \
-  commitai-v2 --agent "/app/agents/assistant.yaml" "Your request here"
+  commitai --agent "/app/agents/assistant.yaml" "Your request here"
 ```
 
 ### Environment Variables
