@@ -56,4 +56,4 @@ jobs:
           GITHUB_PR_NUMBER: ${{ github.event.number }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          python -m src.run_agent --verbose --agent "$GITHUB_WORKSPACE/agents/code_reviewer.yaml" "Proceed current PR number ${GITHUB_PR_NUMBER}"
+          python -m src.run_agent --verbose --agent "$GITHUB_WORKSPACE/agents/code_reviewer.yaml" "Proceed current PR"
